@@ -1,0 +1,73 @@
+<app-page-header title="Crew Management" [breadcrumbs]="[{ label: 'Crew' }]" />
+
+<div class="toolbar-row">
+  <app-search-bar placeholder="Search by name or role..." (search)="onSearch($event)" />
+  <div class="filter-group">
+    @for (r of roles; track r) {
+      <ion-chip
+        [outline]="roleFilter !== r"
+        [color]="roleFilter === r ? 'primary' : 'medium'"
+        (click)="roleFilter = r"
+      >
+        {{ r }}
+      </ion-chip>
+    }
+  </div>
+</div>
+
+<div class="status-filters">
+  @for (s of statuses; track s) {
+    <ion-chip
+      [outline]="statusFilter !== s"
+      [color]="statusFilter === s ? 'primary' : 'medium'"
+      (click)="statusFilter = s"
+    >
+      <span class="status-dot" [style.background]="getStatusColor(s)"></span>
+      {{ s }}
+    </ion-chip>
+  }
+</div>
+
+@if (filteredCrew.length > 0) {
+  <div class="crew-grid">
+    @for (member of filteredCrew; track member.id) {
+      <div class="crew-card">
+        <div class="card-top">
+          <div class="avatar-lg" [style.background]="getRoleColor(member.role)">
+            {{ member.name.charAt(0) }}{{ member.name.split(' ')[1]?.charAt(0) }}
+          </div>
+          <div class="card-info">
+            <strong>{{ member.name }}</strong>
+            <span class="role-label">{{ member.role }}</span>
+          </div>
+          <span class="status-badge" [style.background]="getStatusColor(member.status)">
+            {{ member.status }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="metric">
+            <span class="metric-label">Hours</span>
+            <span class="metric-value">{{ member.hoursThisMonth }}h</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(member.hoursThisMonth / 160) * 100" [style.background]="getRoleColor(member.role)"></div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          @for (cert of member.certifications; track cert) {
+            <ion-chip class="cert-chip">{{ cert }}</ion-chip>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (filteredCrew.length === 0) {
+  <app-empty-state
+    icon="people-outline"
+    message="No crew members match your filters"
+  />
+}

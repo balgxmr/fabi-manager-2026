@@ -1,0 +1,115 @@
+<ion-content class="ion-padding">
+  @if (flight) {
+    <a [routerLink]="'/flights'" class="back-link">
+      <ion-icon name="arrow-back-outline" /> Back to Flights
+    </a>
+
+    <div class="detail-header">
+      <div class="header-left">
+        <h1>{{ flight.id }}</h1>
+        <app-status-chip [status]="flight.status" />
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <ion-icon name="navigate-outline" />
+        <span class="info-label">Destination</span>
+        <span class="info-value">{{ flight.destination }}</span>
+      </div>
+      <div class="info-card">
+        <ion-icon name="time-outline" />
+        <span class="info-label">Departure</span>
+        <span class="info-value">{{ flight.time }}</span>
+      </div>
+      <div class="info-card">
+        <ion-icon name="home-outline" />
+        <span class="info-label">Gate</span>
+        <span class="info-value">{{ flight.gate }}</span>
+      </div>
+      <div class="info-card">
+        <ion-icon name="airplane-outline" />
+        <span class="info-label">Aircraft</span>
+        <span class="info-value">{{ flight.aircraft }}</span>
+      </div>
+      <div class="info-card">
+        <ion-icon name="layers-outline" />
+        <span class="info-label">Terminal</span>
+        <span class="info-value">{{ flight.terminal }}</span>
+      </div>
+      <div class="info-card">
+        <ion-icon name="person-outline" />
+        <span class="info-label">Captain</span>
+        <span class="info-value">
+          @if (assignedCrew.length > 0) {
+            {{ assignedCrew[0].name }}
+          } @else {
+            <span class="unassigned">—</span>
+          }
+        </span>
+      </div>
+    </div>
+
+    <div class="crew-section">
+      <div class="section-head">
+        <h2>Assigned Crew ({{ assignedCrew.length }})</h2>
+        <ion-button fill="outline" size="small" (click)="openAssign()">
+          <ion-icon name="create-outline" slot="start" />
+          Edit Crew
+        </ion-button>
+      </div>
+
+      @if (assignedCrew.length > 0) {
+        <div class="crew-grid">
+          @for (member of assignedCrew; track member.id) {
+            <div class="crew-card">
+              <div class="crew-avatar">{{ member.name.charAt(0) }}{{ member.name.split(' ')[1]?.charAt(0) }}</div>
+              <div class="crew-info">
+                <strong>{{ member.name }}</strong>
+                <span class="crew-role">{{ member.role }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-crew">
+          <ion-icon name="people-outline" />
+          <p>No crew assigned yet</p>
+          <ion-button fill="outline" size="small" (click)="openAssign()">Assign Crew</ion-button>
+        </div>
+      }
+    </div>
+
+    <div class="timeline-section">
+      <h2>Flight Timeline</h2>
+      <div class="timeline">
+        @for (event of timeline; track event.label) {
+          <div class="timeline-item" [class]="event.status">
+            <div class="timeline-dot">
+              <ion-icon [name]="event.icon" />
+            </div>
+            <div class="timeline-content">
+              <span class="timeline-label">{{ event.label }}</span>
+              <span class="timeline-time">{{ event.time }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (!flight) {
+    <div class="not-found">
+      <ion-icon name="search-outline" />
+      <h3>Flight not found</h3>
+      <ion-button routerLink="/flights" fill="outline">Back to Flights</ion-button>
+    </div>
+  }
+</ion-content>
+
+<app-assign-crew
+  [isOpen]="showAssignModal"
+  [flight]="flight ?? null"
+  (didDismiss)="closeAssign()"
+  (crewSaved)="onCrewSaved()"
+/>

@@ -1,20 +1,63 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-title>FABI Manager</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+<ion-content class="ion-padding">
+  <div class="dashboard-header">
+    <h1>Flight Dashboard</h1>
+    <ion-text color="medium">
+      <p>{{ flights.length }} active flights</p>
+    </ion-text>
   </div>
+
+  <ion-card>
+    <ion-card-content class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Destination</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Crew</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (flight of flights; track flight.id) {
+            <tr>
+              <td><strong>{{ flight.id }}</strong></td>
+              <td>{{ flight.destination }}</td>
+              <td>{{ flight.time }}</td>
+              <td>
+                <ion-chip [color]="getStatusColor(flight.status)">
+                  {{ flight.status }}
+                </ion-chip>
+              </td>
+              <td>
+                <ion-text color="medium">
+                  {{ flight.crew.length }} assigned
+                </ion-text>
+              </td>
+              <td>
+                <ion-button size="small" color="primary" (click)="openAssignCrew(flight)">
+                  <ion-icon name="people-outline" slot="start" />
+                  Assign Crew
+                </ion-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </ion-card-content>
+  </ion-card>
+
+  <app-assign-crew
+    [isOpen]="showModal"
+    [flight]="selectedFlight"
+    (didDismiss)="onModalDismiss()"
+    (crewSaved)="onCrewSaved()"
+  />
 </ion-content>

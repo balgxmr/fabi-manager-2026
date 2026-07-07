@@ -1,0 +1,172 @@
+<app-page-header title="Dashboard" [breadcrumbs]="[{ label: 'Dashboard' }]" />
+
+<div class="kpi-grid">
+  <app-kpi-card
+    icon="airplane-outline"
+    label="Total Flights"
+    [value]="totalFlights"
+    [trend]="3.2"
+    iconBg="#0054e9"
+  />
+  <app-kpi-card
+    icon="checkmark-circle-outline"
+    label="On Time"
+    [value]="onTimeFlights"
+    [trend]="5.1"
+    iconBg="#22c55e"
+  />
+  <app-kpi-card
+    icon="alert-circle-outline"
+    label="Delayed"
+    [value]="delayedFlights"
+    [trend]="-2.3"
+    iconBg="#f59e0b"
+  />
+  <app-kpi-card
+    icon="people-outline"
+    label="Crew Assigned"
+    [value]="totalCrewAssigned"
+    [trend]="1.8"
+    iconBg="#8b5cf6"
+  />
+</div>
+
+<div class="section-header">
+  <div>
+    <h2>Recent Flights</h2>
+    <p class="section-subtitle">Latest 10 of {{ totalFlights }} active flights</p>
+  </div>
+  <ion-button fill="outline" (click)="openAllFlights()">
+    <ion-icon name="expand-outline" slot="start" />
+    View All Flights
+  </ion-button>
+</div>
+
+<div class="table-card">
+  <table class="flight-table">
+    <thead>
+      <tr>
+        <th>Flight</th>
+        <th>Destination</th>
+        <th>Departure</th>
+        <th>Gate</th>
+        <th>Status</th>
+        <th>Crew</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (flight of recentFlights; track flight.id) {
+        <tr (click)="goToFlight(flight.id)">
+          <td><strong>{{ flight.id }}</strong></td>
+          <td>{{ flight.destination }}</td>
+          <td>{{ flight.time }}</td>
+          <td>{{ flight.gate }}</td>
+          <td><app-status-chip [status]="flight.status" /></td>
+          <td>
+            <span class="crew-cell">
+              <ion-icon name="people-outline" />
+              {{ getCrewCount(flight.id) }}
+            </span>
+          </td>
+          <td>
+            <ion-button
+              size="small"
+              fill="clear"
+              (click)="$event.stopPropagation(); openAssign(flight)"
+            >
+              <ion-icon name="person-add-outline" slot="icon-only" />
+            </ion-button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<app-assign-crew
+  [isOpen]="showAssignModal"
+  [flight]="selectedFlight"
+  (didDismiss)="closeAssign()"
+  (crewSaved)="onCrewSaved()"
+/>
+
+<ion-modal [isOpen]="showAllModal" (didDismiss)="closeAllFlights()" class="full-modal">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button (click)="closeAllFlights()">
+            <ion-icon name="close-outline" slot="icon-only" />
+          </ion-button>
+        </ion-buttons>
+        <ion-title>All Flights</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+      <div class="modal-top">
+        <ion-searchbar
+          [(ngModel)]="modalSearch"
+          placeholder="Search by flight ID or destination"
+          class="modal-search"
+        />
+        <div class="filter-chips">
+          @for (opt of filterOptions; track opt) {
+            <ion-chip
+              [outline]="modalFilter !== opt"
+              [color]="modalFilter === opt ? 'primary' : 'medium'"
+              (click)="modalFilter = opt"
+            >
+              {{ opt }}
+            </ion-chip>
+          }
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="flight-table">
+          <thead>
+            <tr>
+              <th>Flight</th>
+              <th>Destination</th>
+              <th>Departure</th>
+              <th>Gate</th>
+              <th>Status</th>
+              <th>Crew</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (flight of filteredModalFlights; track flight.id) {
+              <tr (click)="goToFlight(flight.id)">
+                <td><strong>{{ flight.id }}</strong></td>
+                <td>{{ flight.destination }}</td>
+                <td>{{ flight.time }}</td>
+                <td>{{ flight.gate }}</td>
+                <td><app-status-chip [status]="flight.status" /></td>
+                <td>
+                  <span class="crew-cell">
+                    <ion-icon name="people-outline" />
+                    {{ getCrewCount(flight.id) }}
+                  </span>
+                </td>
+                <td>
+                  <ion-button size="small" fill="clear" (click)="$event.stopPropagation(); openAssign(flight)">
+                    <ion-icon name="person-add-outline" slot="icon-only" />
+                  </ion-button>
+                </td>
+              </tr>
+            }
+            @if (filteredModalFlights.length === 0) {
+              <tr>
+                <td colspan="7" class="empty-cell">
+                  <ion-text color="medium">No flights match your search</ion-text>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

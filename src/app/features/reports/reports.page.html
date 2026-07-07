@@ -1,0 +1,112 @@
+<app-page-header title="Reports" [breadcrumbs]="[{ label: 'Reports' }]" />
+
+<div class="mini-kpis">
+  <div class="mini-card">
+    <span class="mini-value">{{ onTimePct }}%</span>
+    <span class="mini-label">On-Time Rate</span>
+  </div>
+  <div class="mini-card">
+    <span class="mini-value">{{ totalDelayed }}</span>
+    <span class="mini-label">Delayed Today</span>
+  </div>
+  <div class="mini-card">
+    <span class="mini-value">{{ avgDelay }}</span>
+    <span class="mini-label">Avg Delay</span>
+  </div>
+  <div class="mini-card">
+    <span class="mini-value">{{ activeCrew }}</span>
+    <span class="mini-label">Active Crew</span>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card wide">
+    <h3>Flight Status Distribution</h3>
+    <div class="bar-chart">
+      @for (day of weeklyData; track day.day) {
+        <div class="bar-column">
+          <div class="bar-stack">
+            <div
+              class="bar-segment bar-cancelled"
+              [style.height.%]="(day.cancelled / maxDaily) * 100"
+              [title]="'Cancelled: ' + day.cancelled"
+            ></div>
+            <div
+              class="bar-segment bar-delayed"
+              [style.height.%]="(day.delayed / maxDaily) * 100"
+              [title]="'Delayed: ' + day.delayed"
+            ></div>
+            <div
+              class="bar-segment bar-ontime"
+              [style.height.%]="(day.onTime / maxDaily) * 100"
+              [title]="'On Time: ' + day.onTime"
+            ></div>
+          </div>
+          <span class="bar-label">{{ day.day }}</span>
+        </div>
+      }
+    </div>
+    <div class="chart-legend">
+      <span class="legend-item"><span class="dot ontime"></span> On Time</span>
+      <span class="legend-item"><span class="dot delayed"></span> Delayed</span>
+      <span class="legend-item"><span class="dot cancelled"></span> Cancelled</span>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Top Destinations</h3>
+    <div class="destinations">
+      @for (dest of topDestinations; track dest.name) {
+        <div class="dest-row">
+          <span class="dest-name">{{ dest.name }}</span>
+          <div class="dest-bar-bg">
+            <div class="dest-bar-fill" [style.width.%]="dest.pct"></div>
+          </div>
+          <span class="dest-count">{{ dest.count }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="chart-card wide">
+    <h3>Hourly Activity</h3>
+    <div class="hourly-chart">
+      <svg viewBox="0 0 480 120" class="line-svg">
+        <polyline
+          [attr.points]="hourlyPoints"
+          fill="none"
+          stroke="#0054e9"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        @for (d of hourlyData; track d.h; let i = $index) {
+          <circle
+            [attr.cx]="(i / (hourlyData.length - 1)) * 460 + 10"
+            [attr.cy]="105 - (d.v / maxHourly) * 85"
+            r="3.5"
+            fill="#0054e9"
+            class="chart-dot"
+          />
+        }
+      </svg>
+      <div class="hourly-labels">
+        @for (d of hourlyData; track d.h) {
+          <span class="hl">{{ d.h }}</span>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Alerts</h3>
+    <div class="alerts-list">
+      @for (alert of alerts; track alert.message) {
+        <div class="alert-item" [style.borderLeftColor]="alert.color">
+          <ion-icon [name]="alert.icon" [style.color]="alert.color" />
+          <span class="alert-msg">{{ alert.message }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</div>

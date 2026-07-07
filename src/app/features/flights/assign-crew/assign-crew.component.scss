@@ -1,0 +1,91 @@
+.crew-modal {
+  --width: 600px;
+  --height: 85%;
+  --border-radius: 16px;
+}
+
+.flight-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+
+  .flight-id {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-primary);
+  }
+
+  .flight-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-left: auto;
+  }
+}
+
+.assigned-section {
+  margin-bottom: 16px;
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+  }
+
+  .empty-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 8px;
+    font-style: italic;
+  }
+}
+
+.assigned-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  ion-chip {
+    margin: 0;
+  }
+}
+
+.crew-search {
+  --background: #f1f5f9;
+  --border-radius: 8px;
+  --box-shadow: none;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.crew-list {
+  background: transparent;
+  padding: 0;
+}
+
+.crew-avatar {
+  --border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  background: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.toggle-icon {
+  font-size: 24px;
+}
