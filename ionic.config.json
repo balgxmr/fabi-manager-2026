@@ -1,0 +1,7 @@
+{
+  "name": "fabi-manager",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
