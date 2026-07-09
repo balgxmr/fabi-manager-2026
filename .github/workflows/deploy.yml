@@ -1,44 +1,28 @@
-name: "Pipeline 3: Actualización de ACI Existente"
+name: Deploy to ACI
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # =========================================================================
-      # AUTENTICACIÓN DIRECTA Y DESPLIEGUE
-      # =========================================================================
-      - name: Forzar Actualización de Imagen en ACI Existente
+      - name: Update ACI Image
         run: |
-          # 1. Autenticación explícita con el Service Principal (Ignora restricciones UTP)
-          az login --service-principal \
-            -u "bc14b145-89e9-44ac-97c6-91113ddd19f7" \
-            -p "${{ secrets.AZURE_ACR_PASSWORD }}" \
-            --tenant "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
-          
-          # 2. Selección explícita de suscripción
-          az account set --subscription "8f3bca61-83a3-4743-8739-dad358684a9f"
-          
-          # 3. Comando de actualización
           az container create \
             --resource-group "ProyectoFinalTopicos" \
             --name "proyectofinal-aci" \
-            --image "proyectofinalacr.azurecr.io/fabi-manager:${{ github.sha }}" \
-            --registry-login-server "proyectofinalacr.azurecr.io" \
-            --registry-username "proyectofinalacr" \
-            --registry-password "FLw2Nffa8O1BVo0v9JgeTYrrOpcFpKxgSJeCexvn4ibw7I6Y0ZfVJQQJ99CFACHYHv6Eqg7NAAACAZCRa15v" \
+            --image "${{ secrets.ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}" \
+            --registry-login-server "${{ secrets.ACR_LOGIN_SERVER }}" \
+            --registry-username "${{ secrets.ACR_USERNAME }}" \
+            --registry-password "${{ secrets.ACR_PASSWORD }}" \
             --vnet "proyectofinal-vnet" \
             --subnet "proyectofinal-subnet-aci" \
-            --os-type Linux \
-            --cpu 1 \
-            --memory 1.5 \
-            --ports 80 \
-            --location eastus2
+            --location "eastus2"
