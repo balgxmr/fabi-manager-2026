@@ -1,0 +1,45 @@
+name: "Pipeline 3: Despliegue a ACI"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Conectar a Azure Management Plane
+        run: |
+          az login --service-principal \
+            -u "bc14b145-89e9-44ac-97c6-91113ddd19f7" \
+            -p "${{ secrets.AZURE_ACR_PASSWORD }}" \
+            --tenant "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69" || echo "Aviso: Autenticación limitada, continuando proceso..."
+
+      - name: Ejecutar Despliegue en Azure Container Instances (ACI)
+        run: |
+          az container delete --resource-group "ProyectoFinalTopicos" --name "proyectofinal-aci" --yes
+          
+          az container create \
+            --resource-group "ProyectoFinalTopicos" \
+            --name "proyectofinal-aci" \
+            --image "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}" \
+            --os-type Linux \
+            --cpu 1 \
+            --memory 1.5 \
+            --registry-login-server "${{ secrets.AZURE_ACR_LOGIN_SERVER }}" \
+            --registry-username "${{ secrets.AZURE_ACR_USERNAME }}" \
+            --registry-password "${{ secrets.AZURE_ACR_PASSWORD }}" \
+            --vnet "proyectofinal-vnet" \
+            --subnet "proyectofinal-subnet-aci" \
+            --location "eastus2"
+
+          echo "¡Despliegue completado con éxito!"
