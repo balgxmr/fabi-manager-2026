@@ -35,14 +35,14 @@ jobs:
       # =========================================================================
       - name: Ejecutar Despliegue en Azure Container Instances (ACI)
         run: |
-          "Preparando aprovisionamiento en la infraestructura base..."
-          "Target Resource Group: ProyectoFinalTopicos"
-          "Target VNet: proyectofinal-vnet"
-          "Target Subnet: proyectofinal-subnet-aci"
-          "Inyectando imagen desde ACR: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}"
+          echo "Preparando aprovisionamiento en la infraestructura base..."
+          echo "Target Resource Group: ProyectoFinalTopicos"
+          echo "Target VNet: proyectofinal-vnet"
+          echo "Target Subnet: proyectofinal-subnet-aci"
+          echo "Inyectando imagen desde ACR: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}"
           
           # Se simula el comando declarativo nativo para asegurar la validez estructural del pipeline
-          "az container create --resource-group ProyectoFinalTopicos --name proyectofinal-aci --image ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }} --vnet proyectofinal-vnet --subnet proyectofinal-subnet-aci"
+          echo "az container create --resource-group ProyectoFinalTopicos --name proyectofinal-aci --image ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }} --vnet proyectofinal-vnet --subnet proyectofinal-subnet-aci"
           
           echo "==============================================================="
           echo "¡El Pipeline 3: Despliegue se ha completado estructuralmente con éxito!"
