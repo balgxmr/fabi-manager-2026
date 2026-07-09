@@ -1,4 +1,5 @@
 name: "Pipeline 3: Despliegue a ACI"
+
 on:
   push:
     branches: [main]
@@ -11,17 +12,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Usamos el CLI de Azure directamente. 
-      # NOTA: Esto solo funcionará si logras autenticar el entorno.
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          # NOTA: Esto expone tus credenciales públicamente en el repo
+          creds: '{"clientId":"TU_CLIENT_ID","clientSecret":"TU_CLIENT_SECRET","subscriptionId":"TU_SUBSCRIPTION_ID","tenantId":"TU_TENANT_ID"}'
+
       - name: Ejecutar Despliegue en ACI
         run: |
           az container create \
             --resource-group "ProyectoFinalTopicos" \
             --name "proyectofinal-aci" \
-            --image "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}" \
-            --registry-login-server "${{ secrets.AZURE_ACR_LOGIN_SERVER }}" \
-            --registry-username "${{ secrets.AZURE_ACR_USERNAME }}" \
-            --registry-password "${{ secrets.AZURE_ACR_PASSWORD }}" \
+            --image "proyectofinalacr.azurecr.io/fabi-manager:${{ github.sha }}" \
+            --registry-login-server "proyectofinalacr.azurecr.io" \
+            --registry-username "proyectofinalacr" \
+            --registry-password "FLw2Nffa8O1BVo0v9JgeTYrrOpcFpKxgSJeCexvn4ibw7I6Y0ZfVJQQJ99CFACHYHv6Eqg7NAAACAZCRa15v" \
             --vnet "proyectofinal-vnet" \
             --subnet "proyectofinal-subnet-aci" \
             --location "eastus2"
