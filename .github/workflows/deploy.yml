@@ -4,27 +4,32 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Te permite ejecutarlo manualmente con un botón en GitHub
+  workflow_dispatch: 
 
 jobs:
   deploy-to-aci:
     runs-on: ubuntu-latest
     steps:
 
-    # 1. Desplegar el contenedor en Azure Container Instances mapeando tus secretos actuales
+    # 1. Desplegar el contenedor en Azure Container Instances mapeando tus secretos
     - name: Desplegar contenedor en Azure Container Instances
       uses: azure/aci-deploy@v1
       with:
-        resource-group: tu-grupo-de-recursos             # REEMPLAZA: Pon aquí el nombre de tu grupo de recursos de Azure
-        location: eastus                                 # REEMPLAZA: Pon la región de tu infraestructura (ej. eastus, southcentralus)
+        # === CAMBIA ESTOS 4 VALORES CON TUS DATOS REALES DE AZURE ===
+        resource-group: ProyectoFinalTopicos
+        location: eastus2 # Cambia por tu región si no es eastus (ej. southcentralus)
+        vnet: proyectofinal-vnet
+        subnet: proyectofinal-subnet-aci
+        # ============================================================
+
         name: fabi-manager-service
         image: proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca
         registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
         registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
         registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
-        ports: 80                                        # El puerto donde escucha tu aplicación
-        dns-name-label: fabi-manager-app-2026            # Subdominio único para tu URL pública
-        environment-variables: |                         # Variables de entorno requeridas por tu aplicación
+        ports: 80                                        
+        dns-name-label: fabi-manager-app-2026            
+        environment-variables: |                         
           NODE_ENV=production
           PORT=80
 
@@ -33,5 +38,7 @@ jobs:
       run: |
         echo "Esperando 20 segundos a que el contenedor termine de levantar..."
         sleep 20
+        # NOTA: Si usas una VNet privada estricta sin IP pública externa, esta validación por curl público podría fallar. 
+        # Si la app tiene IP pública asignada dentro de la región especificada, funcionará:
         curl -f http://fabi-manager-app-2026.eastus.azurecontainer.io || exit 1
         echo "¡Aplicación desplegada y respondiendo con éxito!"
