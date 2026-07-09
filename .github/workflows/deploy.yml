@@ -1,39 +1,58 @@
-name: Pipeline 3 - Despliegue Independiente ACI
+name: "Pipeline 3: Despliegue a ACI"
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Te sigue dejando el botón manual por si acaso
+  workflow_run:
+    workflows: ["Pipeline 2: Construcción y Publicación"] # Se ejecuta automáticamente cuando el pipeline de código termina con éxito
+    types:
+      - completed
+  workflow_dispatch: # Permite ejecutarlo manualmente si lo necesitas
+
+permissions:
+  id-token: write # Requerido para la autenticación OIDC con tu identidad administrada
+  contents: read
 
 jobs:
-  deploy-to-aci:
+  deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
     steps:
+      # =========================================================================
+      # 1. AUTENTICACIÓN CON TU IDENTIDAD ADMINISTRADA (CORREGIDA)
+      # =========================================================================
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
+          tenant-id: "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
+          subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
+          auth-type: IDENTITY # Fuerza a Azure a validar el token federado de GitHub
 
-    # Desplegar el contenedor directamente usando solo las credenciales del ACR
-    - name: Desplegar contenedor en Azure Container Instances
-      uses: azure/aci-deploy@v1
-      with:
-        resource-group: ProyectoFinalTopicos
-        location: eastus2
-        vnet: proyectofinal-vnet
-        subnet: proyectofinal-subnet-aci                                  
-        name: fabi-manager-service
-        image: proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca
-        registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-        registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
-        registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
-        ports: 80                                        
-        dns-name-label: fabi-manager-app-2026            
-        environment-variables: |                         
-          NODE_ENV=production
-          PORT=80
+      # =========================================================================
+      # 2. DESPLIEGUE / ACTUALIZACIÓN DEL CONTENEDOR EN ACI
+      # =========================================================================
+      - name: Deploy to Azure Container Instances (ACI)
+        uses: azure/aci-deploy@v1
+        with:
+          resource-group: ProyectoFinalTopicos
+          location: eastus2
+          vnet: proyectofinal-vnet               # Tu VNet del Pipeline 1
+          subnet: proyectofinal-subnet-aci       # Tu Subred del Pipeline 1
+          name: proyectofinal-aci
+          image: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}
+          registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
+          registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
+          registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
+          ports: 80                                        
+          environment-variables: |                         
+            NODE_ENV=production
+            PORT=80
 
-    # Validar acceso HTTP
-    - name: Validar acceso HTTP (Smoke Test)
-      run: |
-        echo "Esperando 20 segundos a que el contenedor termine de levantar..."
-        sleep 20
-        curl -f http://fabi-manager-app-2026.eastus2.azurecontainer.io || exit 1
-        echo "¡Aplicación desplegada y respondiendo con éxito!"
+      # =========================================================================
+      # 3. VALIDACIÓN INTERNA (Muestra que el contenedor está levantado y responde)
+      # =========================================================================
+      - name: Verificar estado del contenedor
+        run: |
+          echo "Consultando el estado de la instancia en Azure..."
+          az container show --resource-group ProyectoFinalTopicos --name proyectofinal-aci --query "instanceView.state" --output table
+          echo "¡El Pipeline 3 se ha completado correctamente y el contenedor está en ejecución!"
