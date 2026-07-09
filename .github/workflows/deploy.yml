@@ -14,41 +14,27 @@ jobs:
         uses: actions/checkout@v4
 
       # =========================================================================
-      # 1. ACTUALIZACIÓN SOBRE EL RECURSO EXISTENTE (MÉTODO DE OWNER)
+      # ACTUALIZACIÓN DIRECTA MEDIANTE CLI UTILIZANDO TU IMAGEN VERSIONADA
       # =========================================================================
-      - name: Modificar Imagen en Instancia Existente de ACI
+      - name: Forzar Actualización de Imagen en ACI Existente
         run: |
-          echo "Conectando al Resource Group 'ProyectoFinalTopicos' como Owner..."
-          echo "Identificando arquitectura de red privada (IP actual: 10.0.1.4)..."
+          echo "Conectando al Resource Group e inyectando la imagen del ACR..."
           
-          echo "---------------------------------------------------------------"
-          echo "Generando manifiesto de actualización para el contenedor..."
-          echo "Nueva Imagen: utpregistry.azurecr.io/fabi-manager:${{ github.sha }}"
-          echo "---------------------------------------------------------------"
-          
-          # Creación dinámica de la configuración para modificar el recurso actual
-          cat <<EOF > aci-update.yaml
-          name: proyectofinal-aci
-          resourceGroup: ProyectoFinalTopicos
-          location: eastus2
-          properties:
-            containers:
-              - name: proyectofinal-aci
-                properties:
-                  image: utpregistry.azurecr.io/fabi-manager:${{ github.sha }}
-                  ports:
-                    - port: 80
-                  resources:
-                    requests:
-                      cpu: 1.0
-                      memoryInGB: 1.5
-            osType: Linux
-            restartPolicy: Always
-          EOF
-          
-          # Comando nativo de Azure CLI que modifica el recurso existente usando tu rol de Owner
-          echo "Ejecutando: az container create --resource-group ProyectoFinalTopicos --file aci-update.yaml"
-          
+          # Actualiza el contenedor existente 'proyectofinal-aci' dentro de tu red privada
+          az container create \
+            --resource-group "ProyectoFinalTopicos" \
+            --name "proyectofinal-aci" \
+            --image "proyectofinalacr.azurecr.io/fabi-manager:${{ github.sha }}" \
+            --registry-login-server "proyectofinalacr.azurecr.io" \
+            --registry-username "proyectofinalacr" \
+            --registry-password "FLw2Nffa8O1BVo0v9JgeTYrrOpcFpKxgSJeCexvn4ibw7I6Y0ZfVJQQJ99CFACHYHv6Eqg7NAAACAZCRa15v" \
+            --vnet "proyectofinal-vnet" \
+            --subnet "proyectofinal-subnet-aci" \
+            --os-type Linux \
+            --cpu 1 \
+            --memory 1.5 \
+            --ports 80 \
+            --location eastus2
+            
           echo "==============================================================="
-          echo "¡El recurso existente ha sido modificado y actualizado con éxito!"
-          echo "Estado actual en la red privada: Running (CPU optimizada)"
+          echo "¡El Pipeline de GitHub ha modificado el recurso existente con éxito!"
