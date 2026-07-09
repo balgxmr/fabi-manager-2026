@@ -1,46 +1,20 @@
 name: "Pipeline 3: Despliegue a ACI"
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # =========================================================================
-      # 1. INTENTO DE AUTENTICACIÓN CON CONTROL DE EXCEPCIONES PARA CUENTAS ACADÉMICAS
-      # =========================================================================
-      - name: Conectar a Azure Management Plane
-        id: azure_login
+      # Usamos el CLI de Azure directamente. 
+      # NOTA: Esto solo funcionará si logras autenticar el entorno.
+      - name: Ejecutar Despliegue en ACI
         run: |
-          echo "Intentando conectar con el entorno federado de la Universidad..."
-          # Usamos || true para capturar restricciones estrictas del Tenant y evitar que rompa el flujo
-          az login --service-principal \
-            -u "bc14b145-89e9-44ac-97c6-91113ddd19f7" \
-            -p "${{ secrets.AZURE_ACR_PASSWORD }}" \
-            --tenant "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69" || echo "Aviso: Autenticación externa limitada por políticas del Tenant UTP. Procediendo con el modo de simulación declarativa."
-
-      # =========================================================================
-      # 2. DECLARACIÓN DEL PROCESO DE DESPLIEGUE EN RED PRIVADA
-      # =========================================================================
-      - name: Ejecutar Despliegue en Azure Container Instances (ACI)
-        run: |
-         # =========================================================================
-      # 2. DESPLIEGUE REAL Y ACTUALIZACIÓN EN AZURE CONTAINER INSTANCES (ACI)
-      # =========================================================================
-      - name: Ejecutar Despliegue/Actualización en ACI
-        run: |
-          echo "Iniciando despliegue real en ACI..."
           az container create \
             --resource-group "ProyectoFinalTopicos" \
             --name "proyectofinal-aci" \
@@ -51,5 +25,3 @@ jobs:
             --vnet "proyectofinal-vnet" \
             --subnet "proyectofinal-subnet-aci" \
             --location "eastus2"
-          
-          echo "¡El contenedor ha sido actualizado correctamente con la imagen: ${{ github.sha }}!"
