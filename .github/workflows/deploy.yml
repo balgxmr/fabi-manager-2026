@@ -1,7 +1,10 @@
 name: Pipeline 3 - Despliegue Independiente ACI
 
 on:
-  workflow_dispatch: # Esto hace que NO se ejecute solo. Solo correrá cuando tú entres a GitHub y le des al botón "Play".
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Te sigue dejando el botón manual por si acaso
 
 jobs:
   deploy-to-aci:
@@ -15,9 +18,8 @@ jobs:
         resource-group: ProyectoFinalTopicos
         location: eastus2
         vnet: proyectofinal-vnet
-        subnet: proyectofinal-subnet-aci                                # Revisa si tu subred se llama diferente dentro de tu vnet
+        subnet: proyectofinal-subnet-aci                                  
         name: fabi-manager-service
-        # Usamos el tag específico que me pasaste al principio
         image: proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca
         registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
         registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
