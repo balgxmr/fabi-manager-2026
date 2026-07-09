@@ -35,14 +35,21 @@ jobs:
       # =========================================================================
       - name: Ejecutar Despliegue en Azure Container Instances (ACI)
         run: |
-          echo "Preparando aprovisionamiento en la infraestructura base..."
-          echo "Target Resource Group: ProyectoFinalTopicos"
-          echo "Target VNet: proyectofinal-vnet"
-          echo "Target Subnet: proyectofinal-subnet-aci"
-          echo "Inyectando imagen desde ACR: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}"
+         # =========================================================================
+      # 2. DESPLIEGUE REAL Y ACTUALIZACIÓN EN AZURE CONTAINER INSTANCES (ACI)
+      # =========================================================================
+      - name: Ejecutar Despliegue/Actualización en ACI
+        run: |
+          echo "Iniciando despliegue real en ACI..."
+          az container create \
+            --resource-group "ProyectoFinalTopicos" \
+            --name "proyectofinal-aci" \
+            --image "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}" \
+            --registry-login-server "${{ secrets.AZURE_ACR_LOGIN_SERVER }}" \
+            --registry-username "${{ secrets.AZURE_ACR_USERNAME }}" \
+            --registry-password "${{ secrets.AZURE_ACR_PASSWORD }}" \
+            --vnet "proyectofinal-vnet" \
+            --subnet "proyectofinal-subnet-aci" \
+            --location "eastus2"
           
-          # Se simula el comando declarativo nativo para asegurar la validez estructural del pipeline
-          echo "az container create --resource-group ProyectoFinalTopicos --name proyectofinal-aci --image ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }} --vnet proyectofinal-vnet --subnet proyectofinal-subnet-aci"
-          
-          echo "==============================================================="
-          echo "¡El Pipeline 3: Despliegue se ha completado estructuralmente con éxito!"
+          echo "¡El contenedor ha sido actualizado correctamente con la imagen: ${{ github.sha }}!"
