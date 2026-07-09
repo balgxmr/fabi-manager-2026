@@ -1,0 +1,37 @@
+name: Pipeline 3 - Despliegue a ACI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Te permite ejecutarlo manualmente con un botón en GitHub
+
+jobs:
+  deploy-to-aci:
+    runs-on: ubuntu-latest
+    steps:
+
+    # 1. Desplegar el contenedor en Azure Container Instances mapeando tus secretos actuales
+    - name: Desplegar contenedor en Azure Container Instances
+      uses: azure/aci-deploy@v1
+      with:
+        resource-group: tu-grupo-de-recursos             # REEMPLAZA: Pon aquí el nombre de tu grupo de recursos de Azure
+        location: eastus                                 # REEMPLAZA: Pon la región de tu infraestructura (ej. eastus, southcentralus)
+        name: fabi-manager-service
+        image: proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca
+        registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
+        registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
+        registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
+        ports: 80                                        # El puerto donde escucha tu aplicación
+        dns-name-label: fabi-manager-app-2026            # Subdominio único para tu URL pública
+        environment-variables: |                         # Variables de entorno requeridas por tu aplicación
+          NODE_ENV=production
+          PORT=80
+
+    # 2. Validar que la aplicación responda (Smoke Test)
+    - name: Validar acceso HTTP
+      run: |
+        echo "Esperando 20 segundos a que el contenedor termine de levantar..."
+        sleep 20
+        curl -f http://fabi-manager-app-2026.eastus.azurecontainer.io || exit 1
+        echo "¡Aplicación desplegada y respondiendo con éxito!"
