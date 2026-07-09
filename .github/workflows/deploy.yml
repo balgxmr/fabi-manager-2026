@@ -1,0 +1,25 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Login en Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: proyectofinalacr.azurecr.io
+          username: proyectofinalacr
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      - name: Build y Push de la imagen
+        run: |
+          docker build -t proyectofinalacr.azurecr.io/fabi-manager:${{ github.sha }} .
+          docker push proyectofinalacr.azurecr.io/fabi-manager:${{ github.sha }}
