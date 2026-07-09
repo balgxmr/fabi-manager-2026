@@ -1,36 +1,35 @@
-name: Pipeline 3 - Despliegue a ACI
+name: Pipeline 3 - Despliegue Independiente ACI
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch: # Esto hace que NO se ejecute solo. Solo correrá cuando tú entres a GitHub y le des al botón "Play".
 
 jobs:
   deploy-to-aci:
     runs-on: ubuntu-latest
     steps:
 
-    # 1. Despliegue directo usando comandos de Azure CLI con el password de tu ACR para evitar el error de login
-    # Esto creará o actualizará tu contenedor dentro de la red virtual indicada
-    - name: Desplegar contenedor mediante Azure CLI
-      run: |
-        az container create \
-          --resource-group ProyectoFinalTopicos \
-          --name fabi-manager-service \
-          --image proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca \
-          --location eastus2 \
-          --vnet proyectofinal-vnet \
-          --subnet proyectofinal-subnet-aci \
-          --registry-login-server ${{ secrets.AZURE_ACR_LOGIN_SERVER }} \
-          --registry-username ${{ secrets.AZURE_ACR_USERNAME }} \
-          --registry-password ${{ secrets.AZURE_ACR_PASSWORD }} \
-          --ports 80 \
-          --dns-name-label fabi-manager-app-2026 \
-          --environment-variables NODE_ENV=production PORT=80
+    # Desplegar el contenedor directamente usando solo las credenciales del ACR
+    - name: Desplegar contenedor en Azure Container Instances
+      uses: azure/aci-deploy@v1
+      with:
+        resource-group: ProyectoFinalTopicos
+        location: eastus2
+        vnet: proyectofinal-vnet
+        subnet: proyectofinal-subnet-aci                                # Revisa si tu subred se llama diferente dentro de tu vnet
+        name: fabi-manager-service
+        # Usamos el tag específico que me pasaste al principio
+        image: proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca
+        registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
+        registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
+        registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
+        ports: 80                                        
+        dns-name-label: fabi-manager-app-2026            
+        environment-variables: |                         
+          NODE_ENV=production
+          PORT=80
 
-    # 2. Validar que la aplicación responda (Smoke Test)
-    - name: Validar acceso HTTP
+    # Validar acceso HTTP
+    - name: Validar acceso HTTP (Smoke Test)
       run: |
         echo "Esperando 20 segundos a que el contenedor termine de levantar..."
         sleep 20
