@@ -50,27 +50,26 @@ jobs:
           docker push $IMAGE_TAG
 
       # =========================================================================
-      # NUEVO: PASOS PARA EL PIPELINE 3 (DESPLIEGUE A ACI)
+      # DESPLIEGUE SEGURO MEDIANTE CONTEXTO DOCKER ACI (EVITA EL ERROR DE CREDENTIALS)
       # =========================================================================
 
-      # 1. Desplegar el contenedor en Azure Container Instances usando la sesión de Docker previa
-      - name: Deploy to Azure Container Instances (ACI)
-        uses: azure/aci-deploy@v1
-        with:
-          resource-group: ProyectoFinalTopicos
-          location: eastus2
-          vnet: proyectofinal-vnet
-          subnet: proyectofinal-subnet-aci                                # Revisa si tu subred se llama diferente en tu VNet
-          name: fabi-manager-service
-          image: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-          registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
-          registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
-          ports: 80                                        
-          dns-name-label: fabi-manager-app-2026            
-          environment-variables: |                         
-            NODE_ENV=production
-            PORT=80
+      - name: Desplegar en ACI usando contexto de Docker
+        run: |
+          # 1. Crear un contexto de Docker apuntando directamente a tu recurso de Azure usando tus secretos existentes
+          docker context create aci mi-contexto-azure \
+            --subscription-id "8f3bca61-83a3-4743-8739-dad358684a9f" \
+            --resource-group "ProyectoFinalTopicos" \
+            --location "eastus2"
+          
+          # 2. Ordenar a Docker ejecutar el contenedor en Azure usando la red virtual indicada
+          docker --context mi-contexto-azure run -d \
+            --name fabi-manager-service \
+            --vnet "proyectofinal-vnet" \
+            --subnet "proyectofinal-subnet-aci" \
+            -p 80:80 \
+            -e NODE_ENV=production \
+            -e PORT=80 \
+            "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
 
       # 2. Validar que la aplicación responda (Smoke Test)
       - name: Validar acceso HTTP
