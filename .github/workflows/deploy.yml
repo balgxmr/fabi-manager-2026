@@ -2,11 +2,11 @@ name: "Pipeline 3: Despliegue a ACI"
 
 on:
   push:
-    branches: [main] 
-  workflow_dispatch: 
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  id-token: write 
+  id-token: write # Indispensable para OIDC
   contents: read
 
 jobs:
@@ -14,23 +14,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-  
+      # =========================================================================
+      # 1. AUTENTICACIÓN POR OIDC INDICANDO TU RECURSO DE IDENTIDAD ADMINISTRADA
+      # =========================================================================
       - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
           tenant-id: "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
           subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
-          auth-type: IDENTITY 
+          # Al pasarle el ID completo del recurso, Azure sabe exactamente qué identidad usar en tu suscripción académica
+          auth-type: IDENTITY
 
-    
+      # =========================================================================
+      # 2. DESPLIEGUE / ACTUALIZACIÓN EN TU RED PRIVADA
+      # =========================================================================
       - name: Deploy to Azure Container Instances (ACI)
         uses: azure/aci-deploy@v1
         with:
           resource-group: ProyectoFinalTopicos
           location: eastus2
-          vnet: proyectofinal-vnet               # Tu VNet del Pipeline 1
-          subnet: proyectofinal-subnet-aci       # Tu Subred del Pipeline 1
+          vnet: proyectofinal-vnet               
+          subnet: proyectofinal-subnet-aci       
           name: proyectofinal-aci
           image: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}
           registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
@@ -41,8 +46,11 @@ jobs:
             NODE_ENV=production
             PORT=80
 
+      # =========================================================================
+      # 3. VALIDACIÓN MEDIANTE CLI
+      # =========================================================================
       - name: Verificar estado del contenedor
         run: |
           echo "Consultando el estado de la instancia en Azure..."
           az container show --resource-group ProyectoFinalTopicos --name proyectofinal-aci --query "instanceView.state" --output table
-          echo "¡El Pipeline 3 se ha completado correctamente y el contenedor está en ejecución!"
+          echo "¡El Pipeline 3 se ha completado correctamente!"
