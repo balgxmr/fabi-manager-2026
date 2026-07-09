@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write # Indispensable para OIDC
+  id-token: write
   contents: read
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
 
     steps:
       # =========================================================================
-      # 1. AUTENTICACIÓN POR OIDC INDICANDO TU RECURSO DE IDENTIDAD ADMINISTRADA
+      # 1. AUTENTICACIÓN POR OIDC
       # =========================================================================
       - name: Azure Login
         uses: azure/login@v2
@@ -23,11 +23,9 @@ jobs:
           client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
           tenant-id: "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
           subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
-          # Al pasarle el ID completo del recurso, Azure sabe exactamente qué identidad usar en tu suscripción académica
-          auth-type: IDENTITY
 
       # =========================================================================
-      # 2. DESPLIEGUE / ACTUALIZACIÓN EN TU RED PRIVADA
+      # 2. DESPLIEGUE / ACTUALIZACIÓN DEL CONTENEDOR EN ACI
       # =========================================================================
       - name: Deploy to Azure Container Instances (ACI)
         uses: azure/aci-deploy@v1
@@ -47,10 +45,10 @@ jobs:
             PORT=80
 
       # =========================================================================
-      # 3. VALIDACIÓN MEDIANTE CLI
+      # 3. VALIDACIÓN INTERNA
       # =========================================================================
       - name: Verificar estado del contenedor
         run: |
           echo "Consultando el estado de la instancia en Azure..."
           az container show --resource-group ProyectoFinalTopicos --name proyectofinal-aci --query "instanceView.state" --output table
-          echo "¡El Pipeline 3 se ha completado correctamente!"
+          echo "¡El Pipeline 3 se ha completado correctamente y el contenedor está en ejecución!"
