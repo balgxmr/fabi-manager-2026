@@ -63,6 +63,7 @@ jobs:
           client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
           tenant-id: "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
           subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
+          auth-type: IDENTITY
 
       - name: Deploy to Azure Container Instances (ACI)
         uses: azure/aci-deploy@v1
