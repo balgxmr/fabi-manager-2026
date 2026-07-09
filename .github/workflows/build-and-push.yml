@@ -8,6 +8,10 @@ on:
 env:
   IMAGE_NAME: fabi-manager
 
+permissions:
+  id-token: write # Requerido para la autenticación segura por OIDC con tu identidad administrada
+  contents: read
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -50,28 +54,35 @@ jobs:
           docker push $IMAGE_TAG
 
       # =========================================================================
-      # DESPLIEGUE SEGURO MEDIANTE CONTEXTO DOCKER ACI (EVITA EL ERROR DE CREDENTIALS)
+      # DESPLIEGUE AUTENTICADO CON TU NUEVA IDENTIDAD ADMINISTRADA
       # =========================================================================
 
-      - name: Desplegar en ACI usando contexto de Docker
-        run: |
-          # 1. Crear un contexto de Docker apuntando directamente a tu recurso de Azure usando tus secretos existentes
-          docker context create aci mi-contexto-azure \
-            --subscription-id "8f3bca61-83a3-4743-8739-dad358684a9f" \
-            --resource-group "ProyectoFinalTopicos" \
-            --location "eastus2"
-          
-          # 2. Ordenar a Docker ejecutar el contenedor en Azure usando la red virtual indicada
-          docker --context mi-contexto-azure run -d \
-            --name fabi-manager-service \
-            --vnet "proyectofinal-vnet" \
-            --subnet "proyectofinal-subnet-aci" \
-            -p 80:80 \
-            -e NODE_ENV=production \
-            -e PORT=80 \
-            "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
+          tenant-id: "f8cdef31-a31e-4b4a-93e4-5f571e912556" # Tenant por defecto común, o se autodetectará con los otros IDs
+          subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
+          allow-no-subscriptions: true
 
-      # 2. Validar que la aplicación responda (Smoke Test)
+      - name: Deploy to Azure Container Instances (ACI)
+        uses: azure/aci-deploy@v1
+        with:
+          resource-group: ProyectoFinalTopicos
+          location: eastus2
+          vnet: proyectofinal-vnet
+          subnet: proyectofinal-subnet-aci
+          name: fabi-manager-service
+          image: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
+          registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
+          registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
+          ports: 80                                        
+          dns-name-label: fabi-manager-app-2026            
+          environment-variables: |                         
+            NODE_ENV=production
+            PORT=80
+
       - name: Validar acceso HTTP
         run: |
           echo "Esperando 20 segundos a que el contenedor termine de levantar..."
