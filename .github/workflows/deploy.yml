@@ -4,47 +4,32 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   deploy-to-aci:
     runs-on: ubuntu-latest
     steps:
 
-    # 1. Autenticación en Azure usando las credenciales del ACR como entidad de servicio administrador
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: |
-          {
-            "clientId": "${{ secrets.AZURE_ACR_USERNAME }}",
-            "clientSecret": "${{ secrets.AZURE_ACR_PASSWORD }}",
-            "subscriptionId": "8f3bca61-83a3-4743-8739-dad358684a9f",
-            "tenantId": "c45a494d-7b24-4f05-88a2-f9024040939d"
-          }
-        # Nota: El subscriptionId lo saqué de tu captura de pantalla anterior. 
-        # El tenantId suele ser común o autodetectado, si te da un error de login, avísame.
+    # 1. Despliegue directo usando comandos de Azure CLI con el password de tu ACR para evitar el error de login
+    # Esto creará o actualizará tu contenedor dentro de la red virtual indicada
+    - name: Desplegar contenedor mediante Azure CLI
+      run: |
+        az container create \
+          --resource-group ProyectoFinalTopicos \
+          --name fabi-manager-service \
+          --image proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca \
+          --location eastus2 \
+          --vnet proyectofinal-vnet \
+          --subnet proyectofinal-subnet-aci \
+          --registry-login-server ${{ secrets.AZURE_ACR_LOGIN_SERVER }} \
+          --registry-username ${{ secrets.AZURE_ACR_USERNAME }} \
+          --registry-password ${{ secrets.AZURE_ACR_PASSWORD }} \
+          --ports 80 \
+          --dns-name-label fabi-manager-app-2026 \
+          --environment-variables NODE_ENV=production PORT=80
 
-    # 2. Desplegar el contenedor en Azure Container Instances
-    - name: Desplegar contenedor en Azure Container Instances
-      uses: azure/aci-deploy@v1
-      with:
-        resource-group: ProyectoFinalTopicos
-        location: eastus2
-        vnet: proyectofinal-vnet
-        subnet: proyectofinal-subnet-aci                                # REVISA: Recuerda verificar si se llama default entrando a tu VNet en Azure
-        name: fabi-manager-service
-        image: proyectofinalacr.azurecr.io/fabi-manager:4dd8f2fe165308ed1375de97844e61469395aeca
-        registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-        registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
-        registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
-        ports: 80                                        
-        dns-name-label: fabi-manager-app-2026            
-        environment-variables: |                         
-          NODE_ENV=production
-          PORT=80
-
-    # 3. Validar que la aplicación responda (Smoke Test)
+    # 2. Validar que la aplicación responda (Smoke Test)
     - name: Validar acceso HTTP
       run: |
         echo "Esperando 20 segundos a que el contenedor termine de levantar..."
