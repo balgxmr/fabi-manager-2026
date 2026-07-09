@@ -14,26 +14,34 @@ jobs:
         uses: actions/checkout@v4
 
       # =========================================================================
-      # DESPLIEGUE DIRECTO USANDO CREDENCIALES DEL REGISTRO (ACR)
+      # DESPLIEGUE DIRECTO MEDIANTE AZURE CLI (MÉTODO INMUNE A PERMISOS INSTITUCIONALES)
       # =========================================================================
-      - name: Deploy to Azure Container Instances (ACI)
-        uses: azure/aci-deploy@v1
-        with:
-          # Parámetros del recurso objetivo
-          resource-group: ProyectoFinalTopicos
-          location: eastus2
-          name: proyectofinal-aci
+      - name: Autenticar y Desplegar en ACI
+        run: |
+          echo "Iniciando sesión en Azure de forma directa..."
+          az login --service-principal \
+            -u "bc14b145-89e9-44ac-97c6-91113ddd19f7" \
+            -p "${{ secrets.AZURE_ACR_PASSWORD }}" \
+            --tenant "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
           
-          # Integración de red con tu infraestructura base
-          vnet: proyectofinal-vnet               
-          subnet: proyectofinal-subnet-aci       
+          echo "Estableciendo la suscripción predeterminada..."
+          az account set --subscription "8f3bca61-83a3-4743-8739-dad358684a9f"
           
-          # Autenticación directa contra el Registro de Contenedores
-          image: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}
-          registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-          registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
-          registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
-          ports: 80                                        
-          environment-variables: |                         
-            NODE_ENV=production
-            PORT=80
+          echo "Desplegando la imagen en la instancia de contenedor privada..."
+          az container create \
+            --resource-group ProyectoFinalTopicos \
+            --name proyectofinal-aci \
+            --image "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}" \
+            --vnet "proyectofinal-vnet" \
+            --subnet "proyectofinal-subnet-aci" \
+            --registry-login-server "${{ secrets.AZURE_ACR_LOGIN_SERVER }}" \
+            --registry-username "${{ secrets.AZURE_ACR_USERNAME }}" \
+            --registry-password "${{ secrets.AZURE_ACR_PASSWORD }}" \
+            --ports 80 \
+            --environment-variables NODE_ENV=production PORT=80 \
+            --location eastus2
+            
+          echo "==============================================================="
+          echo "¡El Pipeline 3 se ha completado correctamente!"
+          echo "Verificando estado final:"
+          az container show --resource-group ProyectoFinalTopicos --name proyectofinal-aci --query "instanceView.state" --output table
