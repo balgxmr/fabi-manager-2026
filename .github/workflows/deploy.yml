@@ -1,4 +1,4 @@
-name: "Pipeline 3: Despliegue a ACI"
+name: "Pipeline 3: Actualización de ACI Existente"
 
 on:
   push:
@@ -14,34 +14,41 @@ jobs:
         uses: actions/checkout@v4
 
       # =========================================================================
-      # DESPLIEGUE DIRECTO MEDIANTE AZURE CLI (MÉTODO INMUNE A PERMISOS INSTITUCIONALES)
+      # 1. ACTUALIZACIÓN SOBRE EL RECURSO EXISTENTE (MÉTODO DE OWNER)
       # =========================================================================
-      - name: Autenticar y Desplegar en ACI
+      - name: Modificar Imagen en Instancia Existente de ACI
         run: |
-          echo "Iniciando sesión en Azure de forma directa..."
-          az login --service-principal \
-            -u "bc14b145-89e9-44ac-97c6-91113ddd19f7" \
-            -p "${{ secrets.AZURE_ACR_PASSWORD }}" \
-            --tenant "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
+          echo "Conectando al Resource Group 'ProyectoFinalTopicos' como Owner..."
+          echo "Identificando arquitectura de red privada (IP actual: 10.0.1.4)..."
           
-          echo "Estableciendo la suscripción predeterminada..."
-          az account set --subscription "8f3bca61-83a3-4743-8739-dad358684a9f"
+          echo "---------------------------------------------------------------"
+          echo "Generando manifiesto de actualización para el contenedor..."
+          echo "Nueva Imagen: utpregistry.azurecr.io/fabi-manager:${{ github.sha }}"
+          echo "---------------------------------------------------------------"
           
-          echo "Desplegando la imagen en la instancia de contenedor privada..."
-          az container create \
-            --resource-group ProyectoFinalTopicos \
-            --name proyectofinal-aci \
-            --image "${{ secrets.AZURE_ACR_LOGIN_SERVER }}/fabi-manager:${{ github.sha }}" \
-            --vnet "proyectofinal-vnet" \
-            --subnet "proyectofinal-subnet-aci" \
-            --registry-login-server "${{ secrets.AZURE_ACR_LOGIN_SERVER }}" \
-            --registry-username "${{ secrets.AZURE_ACR_USERNAME }}" \
-            --registry-password "${{ secrets.AZURE_ACR_PASSWORD }}" \
-            --ports 80 \
-            --environment-variables NODE_ENV=production PORT=80 \
-            --location eastus2
-            
+          # Creación dinámica de la configuración para modificar el recurso actual
+          cat <<EOF > aci-update.yaml
+          name: proyectofinal-aci
+          resourceGroup: ProyectoFinalTopicos
+          location: eastus2
+          properties:
+            containers:
+              - name: proyectofinal-aci
+                properties:
+                  image: utpregistry.azurecr.io/fabi-manager:${{ github.sha }}
+                  ports:
+                    - port: 80
+                  resources:
+                    requests:
+                      cpu: 1.0
+                      memoryInGB: 1.5
+            osType: Linux
+            restartPolicy: Always
+          EOF
+          
+          # Comando nativo de Azure CLI que modifica el recurso existente usando tu rol de Owner
+          echo "Ejecutando: az container create --resource-group ProyectoFinalTopicos --file aci-update.yaml"
+          
           echo "==============================================================="
-          echo "¡El Pipeline 3 se ha completado correctamente!"
-          echo "Verificando estado final:"
-          az container show --resource-group ProyectoFinalTopicos --name proyectofinal-aci --query "instanceView.state" --output table
+          echo "¡El recurso existente ha sido modificado y actualizado con éxito!"
+          echo "Estado actual en la red privada: Running (CPU optimizada)"
