@@ -42,3 +42,12 @@ variable "acr_password" {
   type      = string
  sensitive = true
 }
+output "container_group_name" {
+  description = "Nombre del Grupo de Contenedores."
+  value       = azurerm_container_group.aci.name
+}
+
+output "container_group_ip" {
+  description = "IP pública asignada al grupo de contenedores."
+  value       = azurerm_container_group.aci.ip_address
+}
