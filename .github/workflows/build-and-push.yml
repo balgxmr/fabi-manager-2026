@@ -61,9 +61,8 @@ jobs:
         uses: azure/login@v2
         with:
           client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
-          tenant-id: "f8cdef31-a31e-4b4a-93e4-5f571e912556" # Tenant por defecto común, o se autodetectará con los otros IDs
+          tenant-id: "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
           subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
-          allow-no-subscriptions: true
 
       - name: Deploy to Azure Container Instances (ACI)
         uses: azure/aci-deploy@v1
