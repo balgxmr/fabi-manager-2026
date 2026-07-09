@@ -1,4 +1,4 @@
-name: Build, Push & Deploy to ACI
+name: Build & Push to ACR
 
 on:
   push:
@@ -7,10 +7,6 @@ on:
 
 env:
   IMAGE_NAME: fabi-manager
-
-permissions:
-  id-token: write # Requerido para la autenticación por OIDC con tu identidad administrada
-  contents: read
 
 jobs:
   build-and-push:
@@ -52,39 +48,3 @@ jobs:
         run: |
           IMAGE_TAG="${{ secrets.AZURE_ACR_LOGIN_SERVER }}/${IMAGE_NAME}:${{ github.sha }}"
           docker push $IMAGE_TAG
-
-      # =========================================================================
-      # DESPLIEGUE AUTENTICADO MEDIANTE IDENTIDAD ADMINISTRADA (OIDC)
-      # =========================================================================
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: "bc14b145-89e9-44ac-97c6-91113ddd19f7"
-          tenant-id: "f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"
-          subscription-id: "8f3bca61-83a3-4743-8739-dad358684a9f"
-          auth-type: IDENTITY
-
-      - name: Deploy to Azure Container Instances (ACI)
-        uses: azure/aci-deploy@v1
-        with:
-          resource-group: ProyectoFinalTopicos
-          location: eastus2
-          name: proyectofinal-aci
-          image: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          registry-login-server: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-          registry-username: ${{ secrets.AZURE_ACR_USERNAME }}
-          registry-password: ${{ secrets.AZURE_ACR_PASSWORD }}
-          ports: 80                                        
-          dns-name-label: fabi-manager-app-2026            
-          ip-address: public  # Asigna una IP pública accesible desde tu navegador
-          environment-variables: |                         
-            NODE_ENV=production
-            PORT=80
-
-      - name: Validar acceso HTTP
-        run: |
-          echo "Esperando 20 segundos a que el contenedor termine de levantar..."
-          sleep 20
-          curl -f http://fabi-manager-app-2026.eastus2.azurecontainer.io || exit 1
-          echo "¡Aplicación desplegada y respondiendo con éxito en internet!"
