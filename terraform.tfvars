@@ -1,1 +1,3 @@
 TF_VAR_acr_password="FLw2Nffa8O1BVo0v9JgeTYrrOpcFpKxgSJeCexvn4ibw7I6Y0ZfVJQQJ99CFACHYHv6Eqg7NAAACAZCRa15v"
+
+terraform import azurerm_container_group.aci /subscriptions/8f3bca61-83a3-4743-8739-dad358684a9f/resourceGroups/ProyectoFinalTopicos/providers/Microsoft.ContainerInstance/containerGroups/proyectofinal-aci
